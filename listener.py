@@ -65,8 +65,8 @@ def check_mode(tree):
 
 class Telegram_Listener:
     def __init__(self):
-        if not os.path.exists("posts"):
-            os.makedirs("posts")
+        if not os.path.exists("images"):
+            os.makedirs("images")
         self.cfgtree = ET.parse('private_config.xml')
         self.proxy = check_mode(self.cfgtree)
         self.TOKEN = get_token(self.cfgtree)
@@ -91,7 +91,7 @@ class Telegram_Listener:
             self.log_event("Init completed, host: " + str(self.host))
 
     def log_event(self, text):
-        log_text = '%s >> %s' % (time.ctime(), text)
+        log_text = '[LISTEN] %s >> %s' % (time.ctime(), text)
         print log_text
         self.logger.error(text)
         return True
@@ -129,13 +129,14 @@ class Telegram_Listener:
         else:
             for update in request.json()['result']:
                 try:
+                    self.log_event("GET JSON: {0}".format(update))
                     telegram_update = TelegramUpdate(update, self)
                     self.offset = telegram_update.update_id
                     if telegram_update.type == 0:
-                        self.log_event("GET ERROR UPDATE:")
-                        self.log_event(request.json())
+                        self.log_event("CAN'T PARSE TO UPDATE")
                     else:
                         updates_list.append(telegram_update)
+                        self.log_event("GET UPDATE: {0}".format(telegram_update))
                 except:
                     self.log_event(update)
         return updates_list
@@ -151,16 +152,15 @@ class Telegram_Listener:
 
         file_path = request.json()['result']['file_path']
         download_url = 'https://api.telegram.org/file/bot{0}/{1}'.format(self.TOKEN, file_path)
-        print download_url
         file_name = file_path.split('/')[-1]
         if self.proxy:
             request = requests.get(download_url, stream=True, proxies=self.proxies)  # HTTP request with proxy
         else:
             request = requests.get(download_url, stream=True)  # HTTP request
-        with open("documents//" + file_name, 'wb') as f:
+        with open("images//" + file_name, 'wb') as f:
             shutil.copyfileobj(request.raw, f)
         self.log_event("File {0} getting".format(file_name))
-        return "documents//" + file_name
+        return "images//" + file_name
 
 
 class TelegramUpdate:
@@ -230,7 +230,9 @@ if __name__ == "__main__":
                             post_text = ''
                             post_photo = ''
                         else:
+                            telebot.log_event("GET TEXT, CHANGE FROM {0} to {1}".format(post_text, message.text))
                             post_text = message.text
+
                     elif message.type == 4:
                         post_photo = message.file_name
                     else:

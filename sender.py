@@ -67,8 +67,6 @@ def check_mode(tree):
 
 class Telegram_Sender:
     def __init__(self):
-        if not os.path.exists("posts"):
-            os.makedirs("posts")
         self.cfgtree = ET.parse('private_config.xml')
         self.proxy = check_mode(self.cfgtree)
         self.TOKEN = get_token(self.cfgtree)
@@ -93,7 +91,7 @@ class Telegram_Sender:
             self.log_event("Init completed, host: " + str(self.host))
 
     def log_event(self, text):
-        log_text = '%s >> %s' % (time.ctime(), text)
+        log_text = '[SEND] %s >> %s' % (time.ctime(), text)
         print log_text
         self.logger.debug(text)
         return True
@@ -109,7 +107,7 @@ class Telegram_Sender:
         else:
             request = requests.post(self.URL + self.TOKEN + '/sendMessage', data=data)  # HTTP request
         if not request.status_code == 200:  # Check server status
-            self.log_event("REAL ERROR: "+request.text)
+            self.log_event("REAL ERROR: " + request.text)
             return False
         else:
             self.log_event("SEND_MESSAGE, text={0}".format(text))
@@ -129,7 +127,7 @@ class Telegram_Sender:
             self.log_event("REAL ERROR: " + request.text)
             return False
         else:
-            self.log_event("POST_TO_CHANNEL")
+            self.log_event("POST_TO_CHANNEL, TEXT:{0}".format(text))
             return True
 
     def post_photo(self, text, image_path):
@@ -146,15 +144,17 @@ class Telegram_Sender:
             self.log_event("REAL ERROR: " + request.text)
             return False
         else:
-            self.log_event("POST_PHOTO")
+            self.log_event("POST_PHOTO, TEXT:{0}, IMAGE:{1}".format(text.encode("utf-8"), image_path))
             return True
 
 
 if __name__ == "__main__":
     telebot = Telegram_Sender()
-    allow_hours = range(0, 24)
+    allow_hours = [12, 18]
+    #allow_hours = range(0, 24)
     while True:
         if datetime.datetime.now().hour in allow_hours:
+            telebot.log_event("RIGHT TIME!")
             post = telebot.cash.get_post()
             if post:
                 try:
@@ -165,5 +165,6 @@ if __name__ == "__main__":
                 except:
                     telebot.log_event(get_exception())
                 telebot.cash.delete_post(post["id"])
-            else:
+                telebot.log_event("SLEEP!")
                 time.sleep(telebot.interval)
+                telebot.log_event("AWAKE!")
