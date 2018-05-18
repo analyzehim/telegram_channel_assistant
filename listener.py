@@ -197,6 +197,19 @@ class TelegramUpdate:
             telebot.log_event("GET STRANGE UPDATE: {0}".format(update))
             return
 
+    def __str__(self):
+        if self.type == 1:
+            return "[mes] (id{0}) send message: {1}".format(self.from_id, self.text)
+
+        elif self.type == 2:
+            return "[callback] (id{0}) callback: text={1}, message_id ={2} ".format(self.from_id, self.callback_text, self.callback_message_id)
+
+        elif self.type == 4:
+            return "[photo] (id{0}) photo: {1} ".format(self.from_id, self.file_name)
+
+        else:
+            return "UNKNOWN MESSAGE TYPE"
+
 
 if __name__ == "__main__":
     telebot = Telegram_Listener()
@@ -207,6 +220,9 @@ if __name__ == "__main__":
             message_list = telebot.get_updates()
             if message_list:
                 for message in message_list:
+                    if message.from_id != telebot.admin_id:
+                        telebot.log_event("WRONG ID: " + message)
+                        continue
                     if message.type == 1:
                         if message.text == '1':
                             telebot.cash.add_post(post_text, post_photo)

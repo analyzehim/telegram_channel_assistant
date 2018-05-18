@@ -25,7 +25,6 @@ def trasform_to_human_time(timestamp):
     return datetime.datetime.fromtimestamp(int(timestamp)).strftime('%Y-%m-%d %H:%M:%S')
 
 
-
 def get_token(tree):
     root = tree.getroot()
     token = root.findall('telegram_token')[0].text
@@ -153,8 +152,9 @@ class Telegram_Sender:
 
 if __name__ == "__main__":
     telebot = Telegram_Sender()
+    allow_hours = range(0, 24)
     while True:
-        if (datetime.datetime.now().hour == 12) or (datetime.datetime.now().hour == 18):
+        if datetime.datetime.now().hour in allow_hours:
             post = telebot.cash.get_post()
             if post:
                 try:
@@ -167,7 +167,3 @@ if __name__ == "__main__":
                 telebot.cash.delete_post(post["id"])
             else:
                 time.sleep(telebot.interval)
-
-# telebot = Telegram_Sender()
-# text = '''<b>Ричард Львиное Сердце</b> говорил на французском языке (английский в то время был языком рабов)'''
-# telebot.post_photo(text, "richard.png")
